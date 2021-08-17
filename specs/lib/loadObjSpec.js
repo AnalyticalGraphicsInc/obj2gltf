@@ -67,6 +67,7 @@ const objIncompleteUvsPath =
 const objIncorrectWindingOrderPath =
   "specs/data/box-incorrect-winding-order/box-incorrect-winding-order.obj";
 const objInvalidPath = "invalid.obj";
+const objFromTinkerCad = "specs/data/tinkercad/torus.obj";
 
 function getMeshes(data) {
   let meshes = [];
@@ -535,6 +536,18 @@ describe("loadObj", () => {
     expect(baseColorTexture.source).toBeDefined();
   });
 
+  it("loads an obj which origins from Tinkercad", async () => {
+    /**
+     * Tinkercad formats the obj files with both spaces and tabs. However, several obj readers know
+     * how to deal with those obj files, so we want this library to also do that
+     */
+    const data = await loadObj(objFromTinkerCad, options);
+    const primitive = getPrimitives(data)[0];
+    expect(primitive.positions.length / 3).toBe(393);
+    expect(primitive.normals.length / 3).toBe(0);
+    expect(primitive.uvs.length / 2).toBe(0);
+  });
+
   it("separates faces that don't use the same attributes as other faces in the primitive", async () => {
     const data = await loadObj(objMixedAttributesPath, options);
     const primitives = getPrimitives(data);
@@ -695,5 +708,13 @@ describe("loadObj", () => {
     expect(
       thrownError.message.startsWith("ENOENT: no such file or directory")
     ).toBe(true);
+  });
+
+  it("vertexPattern should recognize a definition with tabs", async () => {
+    expect(loadObj.vertexPattern.exec("v -19.087 		-17 		0.343")).not.toBeNull();
+  });
+
+  it("facePattern should recognize a definition with tabs", async () => {
+    expect(loadObj.facePattern.exec("f 55 	112 	117")).not.toBeNull();
   });
 });
